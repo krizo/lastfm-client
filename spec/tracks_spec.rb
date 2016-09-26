@@ -5,13 +5,11 @@ describe "LastfmClient" do
     @client = LastfmClient.new(ENV['API_KEY'], 'kriz_z')
   end
 
-  expected_attributes = [ 'user', 'page', 'perPage', 'totalPages', 'total']
 
   describe ".recent_tracks" do
     before(:each) do
       @params = { ignore_now_playing: true }
     end
-
     let(:actual_attributes) { @client.recent_tracks_attributes(@params) }
 
     it "returns recent 50 tracks by default" do
@@ -37,6 +35,8 @@ describe "LastfmClient" do
     end
 
     context "global attributes" do
+      expected_attributes = [ 'user', 'page', 'perPage', 'totalPages', 'total']
+
       it "attribute names" do
         expect(actual_attributes.keys).to match_array expected_attributes
       end
@@ -60,5 +60,41 @@ describe "LastfmClient" do
       end
     end
 
+  end
+
+  describe ".track_info" do
+    before(:all) do
+      @artist = 'Cher'
+      @track_name = 'Believe'
+      @track = @client.track_info(@artist, @track_name)
+    end
+
+    expected_attributes = [ 'name', 'mbid', 'url', 'duration', 'streamable', 'listeners',
+      'playcount', 'artist', 'album', 'userloved', 'toptags', 'wiki']
+
+    expected_attributes.each do |attribute|
+      it "##{attribute}" do
+        expect(@track).to include attribute
+      end
+    end
+
+    context "when not found" do
+      let(:not_existing) { "NotExisting" }
+
+      it "not existing artist" do
+        track = @client.track_info(not_existing, @track_name)
+        expect(track).to be_nil
+      end
+
+      it "not existing track name" do
+        track = @client.track_info(@artist, not_existing)
+        expect(track).to be_nil
+      end
+
+      it "not existing track name and artist" do
+        track = @client.track_info(not_existing, not_existing)
+        expect(track).to be_nil
+      end
+    end
   end
 end
