@@ -25,16 +25,6 @@ describe "LastfmClient" do
       expect(@client.recent_tracks_attributes(@params)['perPage'].to_i).to eq 3
     end
 
-    it "attribute names" do
-      expect(actual_attributes.keys).to match_array expected_attributes
-    end
-
-    expected_attributes.map do |attribute|
-      it "#{attribute}'s value not nil" do
-        expect(@client.recent_tracks_attributes(@params)[attribute]).not_to be_nil
-      end
-    end
-
     it "recent tracks from specific date" do
       from_date = Date.new(2016,9,24)
       to_date = Date.new(2016,9,25).to_time.to_i
@@ -45,5 +35,30 @@ describe "LastfmClient" do
         expect(Time.at(actual_timestamp).strftime("%d %b %Y")).to eq check_date
       end
     end
+
+    context "global attributes" do
+      it "attribute names" do
+        expect(actual_attributes.keys).to match_array expected_attributes
+      end
+
+      expected_attributes.map do |attribute|
+        it "##{attribute}'s value not nil" do
+          expect(@client.recent_tracks_attributes(@params)[attribute]).not_to be_nil
+        end
+      end
+    end
+
+    context "tracks' attributes" do
+      before(:all) do
+        @recent_track = @client.recent_tracks(limit: 1).first
+      end
+
+      ['artist', 'name', 'streamable', 'mbid', 'album', 'url', 'image'].each do |attribute|
+        it "##{attribute}" do
+          expect(@recent_track).to include attribute
+        end
+      end
+    end
+
   end
 end
