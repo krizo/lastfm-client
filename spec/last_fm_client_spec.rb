@@ -34,5 +34,16 @@ describe "LastfmClient" do
         expect(@client.recent_tracks_attributes(@params)[attribute]).not_to be_nil
       end
     end
+
+    it "recent tracks from specific date" do
+      from_date = Date.new(2016,9,24)
+      to_date = Date.new(2016,9,25).to_time.to_i
+      @params[:from], @params[:to] = from_date.to_time.to_i, to_date
+      check_date = from_date.strftime("%d %b %Y")
+      actual_dates = @client.recent_tracks(@params).map { |e| e['date']['uts'].to_i }
+      actual_dates.each do |actual_timestamp|
+        expect(Time.at(actual_timestamp).strftime("%d %b %Y")).to eq check_date
+      end
+    end
   end
 end
