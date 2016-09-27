@@ -2,7 +2,7 @@ require 'csv'
 require 'last_fm_client'
 
 class CsvExporter
-  attr_reader :output_file
+  attr_reader :output_file, :exported_records
   include Categories::Tracks
   include Categories::Artists
 
@@ -17,19 +17,13 @@ class CsvExporter
     end
   end
 
-  def save_row(row=[])
-    CSV.open(@output_file, 'a') do |csvfile|
-      csvfile << row
-    end
-  end
-
   def export_recent_tracks(output_file, params={})
-    exporter = CsvExporter.new(self, output_file)
-    pages = params[:end_page] || recent_tracks_attributes(params)['totalPages'].to_i
+    @exported_records = 0
+    pages = params[:end_page] || @client.recent_tracks_attributes(params)['totalPages'].to_i
     current_page = params[:start_page] || 1
     first_row = true
-    CSV.open(exporter.output_file,'a') do |csvfile|
-      while current_page < pages
+    CSV.open(@output_file, 'a') do |out|
+      while current_page <= pages
         tracks = @client.recent_tracks({ page: current_page, ignore_now_playing: true })
         tracks.each do |track|
           artist = track['artist']['#text']
@@ -64,11 +58,13 @@ class CsvExporter
           }
           if first_row
             p row.keys if params[:verbose_mode] == true
-            exporter.init_headers(row.keys)
+            init_headers(row.keys)
             first_row = false
+          else
+            p row.values if params[:verbose_mode] == true
+            out << row.values
+            @exported_records += 1
           end
-          p row.values if params[:verbose_mode] == true
-          csvfile << row.values
         end
         current_page += 1
       end
