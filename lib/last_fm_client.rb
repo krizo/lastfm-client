@@ -31,6 +31,8 @@ class LastfmClient
   def make_request(method, options)
     options[:user] ||= @user
     options[:method] = method
+    options[:from] = options[:from].to_time.to_i if options[:from]
+    options[:to] = options[:to].to_time.to_i if options[:to]
     handle_response do
       self.class.get(self.base_path, query: options)
     end

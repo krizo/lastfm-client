@@ -24,13 +24,13 @@ describe "LastfmClient" do
     end
 
     it "recent tracks from specific date" do
-      from_date = Date.new(2016,9,24)
-      to_date = Date.new(2016,9,25).to_time.to_i
-      @params[:from], @params[:to] = from_date.to_time.to_i, to_date
-      check_date = from_date.strftime("%d %b %Y")
+      from = Time.parse("2016-09-24 00:00:00 UTC")
+      to = Time.parse("2016-09-25 00:00:00 UTC")
+      @params[:from], @params[:to] = from, to
+      check_date = from.strftime("%d %b %Y")
       actual_dates = @client.recent_tracks(@params).map { |e| e['date']['uts'].to_i }
       actual_dates.each do |actual_timestamp|
-        expect(Time.at(actual_timestamp).strftime("%d %b %Y")).to eq check_date
+        expect((Time.at(actual_timestamp).utc).strftime("%d %b %Y")).to eq check_date
       end
     end
 
