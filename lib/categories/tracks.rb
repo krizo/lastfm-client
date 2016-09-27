@@ -20,8 +20,6 @@ module Categories
     end
 
     def track_info(artist, track_name, params={})
-      artist.gsub!(" ", "+")
-      track_name.gsub!(" ", "+")
       method = "track.getinfo"
       make_request(method, { artist: artist, track: track_name}.merge(params))['track']
     end
