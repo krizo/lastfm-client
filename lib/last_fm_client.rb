@@ -1,10 +1,14 @@
 require 'httparty'
 require 'pry'
 require 'categories/tracks'
+require 'categories/artists'
 
 class LastfmClient
   include HTTParty
   include Categories::Tracks
+  include Categories::Artists
+
+  attr_reader :user
 
   base_uri "ws.audioscrobbler.com"
 
