@@ -11,25 +11,67 @@ class CsvExporter
     @output_file = output_file
   end
 
+  def export_for_timeframe(output_file, from_time, to_time=Time.now, params={})
+    params = init_export(params)
+    params[:from], params[:to] = from_time, to_time
+    pages = params[:end_page] || @client.recent_tracks_attributes(params)['totalPages'].to_i
+    current_page = params[:start_page] || 1
+    while current_page <= pages
+      options = {
+        from: from_time,
+        to: to_time,
+        ignore_now_playing: true,
+        page: current_page,
+        limit: params[:limit]
+      }
+      tracks = @client.recent_tracks(options)
+      save_tracks(tracks)
+      current_page += 1
+    end
+  end
+
+  def export_recent_tracks(output_file, params={})
+    params = init_export(params)
+    pages = params[:end_page] || @client.recent_tracks_attributes(params)['totalPages'].to_i
+    current_page = params[:start_page] || 1
+    while current_page <= pages
+      params[:page] = current_page
+      params[:ignore_now_playing] = true
+      tracks = @client.recent_tracks(params)
+      save_tracks(tracks)
+      current_page += 1
+    end
+  end
+
+  private
   def init_headers(headers=[])
     CSV.open(@output_file, 'w') do |csvfile|
       csvfile << headers
     end
   end
 
-  def export_recent_tracks(output_file, params={})
+  def init_export(params={})
     @exported_records = 0
-    pages = params[:end_page] || @client.recent_tracks_attributes(params)['totalPages'].to_i
-    current_page = params[:start_page] || 1
-    while current_page <= pages
-      tracks = @client.recent_tracks({ page: current_page, ignore_now_playing: true })
-      save_tracks(tracks)
-      current_page += 1
-    end
+    params[:limit] ||= 200
+    headers = [
+      'user',
+      'timestamp',
+      'date',
+      'time',
+      'artist',
+      'album',
+      'track_name',
+      'duration',
+      'listeners',
+      'playcount',
+      'user_playcount',
+      'tags'
+    ]
+    init_headers(headers)
+    params
   end
 
   def save_tracks(tracks)
-    first_row = true
     tracks.each do |track|
       CSV.open(@output_file, 'a') do |out|
         artist = track['artist']['#text']
@@ -62,13 +104,8 @@ class CsvExporter
           user_playcount: user_playcount,
           tags: tags.join(";")
         }
-        if first_row
-          init_headers(row.keys)
-          first_row = false
-        else
-          out << row.values
-          @exported_records += 1
-        end
+        out << row.values
+        @exported_records += 1
       end
     end
   end
